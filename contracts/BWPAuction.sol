@@ -56,7 +56,6 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
   event Bid(address indexed sender, uint auctionId, uint price, uint bidAt);
   event CancelAuction(address indexed sender, uint auctionId);
   event EndAuction(address indexed sender, uint auctionId);
-  event Withdraw(address indexed sender, uint amount);
   event SetBidPricePercent(address indexed sender, uint _bidPricePercent);
 
   constructor (address __bwp, uint256 _bidPricePercent) {
@@ -161,16 +160,6 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
 
     IERC721(auction.nft).safeTransferFrom(address(this), _msgSender(), auction.itemId);
     emit CancelAuction(_msgSender(), _auctionId);
-  }
-
-  /**
-   * Withdraw BWP token
-   *
-   * @param amount BWP token amount to withdraw
-  */
-  function withdraw(uint amount) external onlyOwner {
-    require(IERC20(_bwp).transfer(_msgSender(), amount), "Auction: BWP transfer failed");
-    emit Withdraw(_msgSender(), amount);
   }
 
   /**
