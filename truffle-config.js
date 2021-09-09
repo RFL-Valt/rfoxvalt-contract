@@ -59,9 +59,9 @@ module.exports = {
       network_id: "*",       // Any network (default: none)
     },
 
-    ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infraKey}`),
-      network_id: 3,      // Ropsten testnet id
+    mainnet: {
+      provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${infraKey}`),
+      network_id: 1,      // Ropsten testnet id
       gas: 5500000,        // Ropsten testnet has a lower block limit than mainnet
       confirmations: 3,    // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)

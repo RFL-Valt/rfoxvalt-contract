@@ -15,7 +15,7 @@ module.exports = async (deployer, network, addresses) => {
   await deployer.deploy(MockBWP, "BWP Token", "BWP");
   await deployer.deploy(BWPNFT, proxyRegistryAddress);
   const bwpAddress = MockBWP.address;
-  const bidPricePercent = 105;
+  const bidPricePercent = 103;
   await deployer.deploy(BWPAuction, bwpAddress, bidPricePercent);
 
   console.log("BWPNFT", BWPNFT.address);

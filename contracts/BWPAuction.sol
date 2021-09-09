@@ -156,6 +156,7 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
   function cancelAuction(uint _auctionId) external validId(_auctionId) validSeller(_auctionId) whenNotPaused {
     AuctionInfo storage auction = auctions[_auctionId];
     require(auction.start > block.timestamp, "Auction: Not Cancelable");
+    require(bidsOfAuction[_auctionId].length == 0, "Auction: There are bids already");
     auction.status = AuctionStatus.Canceled;
 
     IERC721(auction.nft).safeTransferFrom(address(this), _msgSender(), auction.itemId);
@@ -247,8 +248,9 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
       uint256[] memory _auctionIds = new uint256[](_wonCount);
       uint256 wonIndex = 0;
       uint256 _auctionId;
+      uint256 auctionLength = auctions.length;
 
-      for (_auctionId = 0; _auctionId <= auctions.length-1; _auctionId++) {
+      for (_auctionId = 0; _auctionId <= auctionLength-1; _auctionId++) {
         if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Ended)) {
           _auctionIds[wonIndex] = _auctionId;
           wonIndex++;
@@ -277,8 +279,9 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
       uint256[] memory _auctionIds = new uint256[](_bidCount);
       uint256 bidIndex = 0;
       uint256 _auctionId;
-
-      for (_auctionId = 0; _auctionId <= auctions.length-1; _auctionId++) {
+      uint256 auctionLength = auctions.length;
+  
+      for (_auctionId = 0; _auctionId <= auctionLength - 1; _auctionId++) {
         if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Normal)) {
           _auctionIds[bidIndex] = _auctionId;
           bidIndex++;
@@ -307,8 +310,9 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
       uint256[] memory _itemIds = new uint256[](_wonCount);
       uint256 wonIndex = 0;
       uint256 _auctionId;
+      uint256 auctionLength = auctions.length;
 
-      for (_auctionId = 0; _auctionId <= auctions.length-1; _auctionId++) {
+      for (_auctionId = 0; _auctionId <= auctionLength - 1; _auctionId++) {
         if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Ended)) {
           _itemIds[wonIndex] = auctions[_auctionId].itemId;
           wonIndex++;
@@ -337,8 +341,9 @@ contract BWPAuction is OwnerPausable, IERC721Receiver {
       uint256[] memory _itemIds = new uint256[](_bidCount);
       uint256 bidIndex = 0;
       uint256 _auctionId;
+      uint256 auctionLength = auctions.length;
 
-      for (_auctionId = 0; _auctionId <= auctions.length-1; _auctionId++) {
+      for (_auctionId = 0; _auctionId <= auctionLength - 1; _auctionId++) {
         if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Normal)) {
           _itemIds[bidIndex] = auctions[_auctionId].itemId;
           bidIndex++;
