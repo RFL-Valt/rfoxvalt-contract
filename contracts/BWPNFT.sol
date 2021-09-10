@@ -14,7 +14,7 @@ contract BWPNFT is ERC721Tradable {
   event PermanentURI(string _value, uint256 indexed _id);
 
   constructor(address _proxyRegistryAddress)
-    ERC721Tradable("BWPNFT", "BNFT", _proxyRegistryAddress)
+    ERC721Tradable("RFOX VALT", "VALT", _proxyRegistryAddress)
   {}
 
 	/**
