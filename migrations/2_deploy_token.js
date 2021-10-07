@@ -2,7 +2,7 @@ const { encodeCall } = require("@openzeppelin/upgrades");
 
 //const MockBWP = artifacts.require("MockBWP.sol");
 const BWPNFT = artifacts.require("BWPNFT.sol");
-const BWPAuction = artifacts.require("BWPAuction.sol");
+//const BWPAuction = artifacts.require("BWPAuction.sol");
 
 module.exports = async (deployer, network, addresses) => {
   let proxyRegistryAddress = "";
@@ -14,12 +14,12 @@ module.exports = async (deployer, network, addresses) => {
 
   //await deployer.deploy(MockBWP, "BWP Token", "BWP");
   await deployer.deploy(BWPNFT, proxyRegistryAddress);
-  const rfoxAddress = "0xa1d6df714f91debf4e0802a542e13067f31b8262";
+  //const rfoxAddress = "0xeba2759d583252cfc96a34e866ae47a5ab7a4707";
   //const bwpAddress = MockBWP.address;
   const bidPricePercent = 103;
-  await deployer.deploy(BWPAuction, rfoxAddress, bidPricePercent);
+  //await deployer.deploy(BWPAuction, rfoxAddress, bidPricePercent);
 
   console.log("BWPNFT", BWPNFT.address);
   //console.log("MockBWP", MockBWP.address);
-  console.log("BWPAuction", BWPAuction.address);
+  //console.log("BWPAuction", BWPAuction.address);
 };
