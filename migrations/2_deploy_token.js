@@ -1,8 +1,8 @@
 const { encodeCall } = require("@openzeppelin/upgrades");
 
 // const MockRFOX = artifacts.require("MockRFOX.sol");
-const RFOXNFT = artifacts.require("RFOXNFT.sol");
-//const RFOXAUCTION = artifacts.require("RFOXAUCTION.sol");
+//const RFOXNFT = artifacts.require("RFOXNFT.sol");
+const RFOXAUCTION = artifacts.require("RFOXAUCTION.sol");
 
 module.exports = async (deployer, network, addresses) => {
   let proxyRegistryAddress = "";
