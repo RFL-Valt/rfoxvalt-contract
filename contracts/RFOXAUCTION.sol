@@ -167,6 +167,7 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
    * @param _bidPricePercent percent
   */
   function setBidPricePercent(uint _bidPricePercent) external onlyOwner {
+    require(_bidPricePercent >= MIN_BID_PRICE_PERCENT && _bidPricePercent <= MAX_BID_PRICE_PERCNET, "Invalid Bid Price Percent");
     bidPricePercent = _bidPricePercent;
     emit SetBidPricePercent(_msgSender(), _bidPricePercent);
   }
@@ -195,19 +196,7 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
    * @param _auctionId auction id to end
   */
   function endAuction(uint _auctionId) external validId(_auctionId) validSeller(_auctionId) {
-    AuctionInfo storage auction = auctions[_auctionId];
-    require(auction.end < block.timestamp, "Auction: Not ended yet");
-
-    auction.status = AuctionStatus.Ended;
-
-    if(auction.bidder != address(0)) {
-      (bool success, ) = auction.seller.call{ value: auction.price}("");
-      require(success, 'Auction: unable to send value, recipient may have reverted');
-      IERC721(auction.nft).safeTransferFrom(address(this), auction.bidder, auction.itemId);
-    }
-
-    wonCount[auction.bidder] = wonCount[auction.bidder].add(1);
-    emit EndAuction(_msgSender(), _auctionId);
+    _finalizeAuction(_auctionId);
   }
 
   /**
@@ -216,9 +205,14 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
    * @param _auctionId auction id to end
   */
   function claimAuction(uint _auctionId) external validId(_auctionId) validWinner(_auctionId) {
+    _finalizeAuction(_auctionId);
+  }
+
+  function _finalizeAuction(uint _auctionId) private {
     AuctionInfo storage auction = auctions[_auctionId];
     require(auction.end < block.timestamp, "Auction: Not ended yet");
 
+    require(auction.status == AuctionStatus.Normal);
     auction.status = AuctionStatus.Ended;
 
     if(auction.bidder != address(0)) {

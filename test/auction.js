@@ -110,6 +110,26 @@ contract('Auction', async (accounts) => {
         assert.equal(pricePercent, bidPricePercent);
     });
 
+    it('set bid price percent failed - invalid min range', async () => {
+        let pricePercent = await auction.bidPricePercent();
+        assert.equal(pricePercent, bidPricePercent);
+        try {
+            await auction.setBidPricePercent(100);
+        } catch (e) {
+            assert.equal(e.reason, "Invalid Bid Price Percent");
+        }
+    });
+
+    it('set bid price percent failed - invalid max range', async () => {
+        let pricePercent = await auction.bidPricePercent();
+        assert.equal(pricePercent, bidPricePercent);
+        try {
+            await auction.setBidPricePercent(121);
+        } catch (e) {
+            assert.equal(e.reason, "Invalid Bid Price Percent");
+        }
+    });
+
     it('set bid price percent success', async () => {
         let pricePercent = await auction.bidPricePercent();
         assert.equal(pricePercent, bidPricePercent);
