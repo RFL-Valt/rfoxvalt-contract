@@ -167,6 +167,7 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
    * @param _bidPricePercent percent
   */
   function setBidPricePercent(uint _bidPricePercent) external onlyOwner {
+    require(_bidPricePercent >= MIN_BID_PRICE_PERCENT && _bidPricePercent <= MAX_BID_PRICE_PERCNET, "Invalid Bid Price Percent");
     bidPricePercent = _bidPricePercent;
     emit SetBidPricePercent(_msgSender(), _bidPricePercent);
   }
@@ -195,19 +196,7 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
    * @param _auctionId auction id to end
   */
   function endAuction(uint _auctionId) external validId(_auctionId) validSeller(_auctionId) {
-    AuctionInfo storage auction = auctions[_auctionId];
-    require(auction.end < block.timestamp, "Auction: Not ended yet");
-
-    auction.status = AuctionStatus.Ended;
-
-    if(auction.bidder != address(0)) {
-      (bool success, ) = auction.seller.call{ value: auction.price}("");
-      require(success, 'Auction: unable to send value, recipient may have reverted');
-      IERC721(auction.nft).safeTransferFrom(address(this), auction.bidder, auction.itemId);
-    }
-
-    wonCount[auction.bidder] = wonCount[auction.bidder].add(1);
-    emit EndAuction(_msgSender(), _auctionId);
+    _finalizeAuction(_auctionId);
   }
 
   /**
@@ -216,9 +205,14 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
    * @param _auctionId auction id to end
   */
   function claimAuction(uint _auctionId) external validId(_auctionId) validWinner(_auctionId) {
+    _finalizeAuction(_auctionId);
+  }
+
+  function _finalizeAuction(uint _auctionId) private {
     AuctionInfo storage auction = auctions[_auctionId];
     require(auction.end < block.timestamp, "Auction: Not ended yet");
 
+    require(auction.status == AuctionStatus.Normal);
     auction.status = AuctionStatus.Ended;
 
     if(auction.bidder != address(0)) {
@@ -229,130 +223,6 @@ contract RFOXAUCTION is OwnerPausable, IERC721Receiver {
 
     wonCount[auction.bidder] = wonCount[auction.bidder].add(1);
     emit EndAuction(_msgSender(), _auctionId);
-  }
-
-  /**
-   * Get auction ids on which user won
-   *
-   * @param account address of user
-   *
-   * @return auctions ids
-  */
-  function getAuctionIdsWon(address account) external view returns (uint256[] memory) {
-    uint256 _wonCount = wonCount[account];
-
-    if (_wonCount == 0) {
-      // Return an empty array
-      return new uint256[](0);
-    } else {
-
-      uint256[] memory _auctionIds = new uint256[](_wonCount);
-      uint256 wonIndex = 0;
-      uint256 _auctionId;
-      uint256 auctionLength = auctions.length;
-
-      for (_auctionId = 0; _auctionId <= auctionLength-1; _auctionId++) {
-        if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Ended)) {
-          _auctionIds[wonIndex] = _auctionId;
-          wonIndex++;
-        }
-      }
-
-      return _auctionIds;
-    }
-  }
-
-  /**
-   * Get auction ids on which user bid
-   *
-   * @param account address of user
-   *
-   * @return auctions ids
-  */
-  function getAuctionIdsBid(address account) external view returns (uint256[] memory) {
-    uint256 _bidCount = bidCount[account];
-
-    if (_bidCount == 0) {
-      // Return an empty array
-      return new uint256[](0);
-    } else {
-
-      uint256[] memory _auctionIds = new uint256[](_bidCount);
-      uint256 bidIndex = 0;
-      uint256 _auctionId;
-      uint256 auctionLength = auctions.length;
-  
-      for (_auctionId = 0; _auctionId <= auctionLength - 1; _auctionId++) {
-        if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Normal)) {
-          _auctionIds[bidIndex] = _auctionId;
-          bidIndex++;
-        }
-      }
-
-      return _auctionIds;
-    }
-  }
-
-  /**
-   * Get token ids on which user won
-   *
-   * @param account address of user
-   *
-   * @return auctions ids
-  */
-  function getItemIdsWon(address account) external view returns (uint256[] memory) {
-    uint256 _wonCount = wonCount[account];
-
-    if (_wonCount == 0) {
-      // Return an empty array
-      return new uint256[](0);
-    } else {
-
-      uint256[] memory _itemIds = new uint256[](_wonCount);
-      uint256 wonIndex = 0;
-      uint256 _auctionId;
-      uint256 auctionLength = auctions.length;
-
-      for (_auctionId = 0; _auctionId <= auctionLength - 1; _auctionId++) {
-        if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Ended)) {
-          _itemIds[wonIndex] = auctions[_auctionId].itemId;
-          wonIndex++;
-        }
-      }
-
-      return _itemIds;
-    }
-  }
-
-  /**
-   * Get token ids on which user bid
-   *
-   * @param account address of user
-   *
-   * @return auctions ids
-  */
-  function getItemIdsBid(address account) external view returns (uint256[] memory) {
-    uint256 _bidCount = bidCount[account];
-
-    if (_bidCount == 0) {
-      // Return an empty array
-      return new uint256[](0);
-    } else {
-
-      uint256[] memory _itemIds = new uint256[](_bidCount);
-      uint256 bidIndex = 0;
-      uint256 _auctionId;
-      uint256 auctionLength = auctions.length;
-
-      for (_auctionId = 0; _auctionId <= auctionLength - 1; _auctionId++) {
-        if ((auctions[_auctionId].bidder == account) && (auctions[_auctionId].status == AuctionStatus.Normal)) {
-          _itemIds[bidIndex] = auctions[_auctionId].itemId;
-          bidIndex++;
-        }
-      }
-
-      return _itemIds;
-    }
   }
 
   /**

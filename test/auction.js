@@ -1,6 +1,7 @@
 const mockRFOX = artifacts.require('MockRFOX');
 const Auction = artifacts.require('RFOXAUCTION');
 const RFOXNFT = artifacts.require('RFOXNFT');
+const { expectEvent } = require("@openzeppelin/test-helpers");
 const BN = web3.utils.BN;
 
 let token;
@@ -69,7 +70,9 @@ contract('Auction', async (accounts) => {
     it('first bid success', async () => {
         const firstPrice = web3.utils.toWei(new BN('2'), 'ether');
         // await token.approve(auction.address, firstPrice, {from:alice});
-        await auction.bid(0, {from: alice, value: firstPrice});
+        const bidData1 = await auction.bid(0, {from: alice, value: firstPrice});
+
+        expectEvent(bidData1, "Bid", { sender: alice, auctionId: new BN('0'), price: firstPrice });
 
         const auctionInfo = await auction.auctions(0);
         assert.equal(auctionInfo.seller, admin);
@@ -82,10 +85,6 @@ contract('Auction', async (accounts) => {
 
         const totalBitCount = await auction.getTotalBidCount({from: alice});
         assert.equal(bidCount, 1);
-
-        const auctionsBid = await auction.getAuctionIdsBid(alice, {from:alice});
-        assert.equal(auctionsBid.length, 1);
-        assert.equal(Number(auctionsBid[0]), 0);
     });
 
     it('second bid failed - lower price', async () => {
@@ -108,6 +107,26 @@ contract('Auction', async (accounts) => {
         
         pricePercent = await auction.bidPricePercent();
         assert.equal(pricePercent, bidPricePercent);
+    });
+
+    it('set bid price percent failed - invalid min range', async () => {
+        let pricePercent = await auction.bidPricePercent();
+        assert.equal(pricePercent, bidPricePercent);
+        try {
+            await auction.setBidPricePercent(100);
+        } catch (e) {
+            assert.equal(e.reason, "Invalid Bid Price Percent");
+        }
+    });
+
+    it('set bid price percent failed - invalid max range', async () => {
+        let pricePercent = await auction.bidPricePercent();
+        assert.equal(pricePercent, bidPricePercent);
+        try {
+            await auction.setBidPricePercent(121);
+        } catch (e) {
+            assert.equal(e.reason, "Invalid Bid Price Percent");
+        }
     });
 
     it('set bid price percent success', async () => {
@@ -147,7 +166,10 @@ contract('Auction', async (accounts) => {
 
         const balanceBefore = Number(await web3.eth.getBalance(admin));
         console.log("seller balance before end auction: ", balanceBefore);
-        await auction.endAuction(0);
+        
+        const endAuction = await auction.endAuction(0);
+        expectEvent(endAuction, "EndAuction", { sender: admin, auctionId: new BN('0')});
+
         const balanceAfter = Number(await web3.eth.getBalance(admin));
         console.log("seller balance after end auction: ", balanceAfter);
         console.log("seller's received eth amount: ", balanceAfter - balanceBefore);
@@ -155,19 +177,8 @@ contract('Auction', async (accounts) => {
         const wonCount = await auction.bidCount(bob, {from:bob});
         assert.equal(wonCount, 1);
 
-        const auctionsWon = await auction.getAuctionIdsWon(bob, {from:bob});
-        assert.equal(auctionsWon.length, 1);
-        assert.equal(Number(auctionsWon[0]), 0);
-
         const contractBalance = await web3.eth.getBalance(auction.address);
         assert.equal(Number(contractBalance), 0);
-
-        const itemsWon = await auction.getItemIdsWon(bob, {from:bob});
-        assert.equal(itemsWon.length, 1);
-        assert.equal(Number(itemsWon[0]), itemId);
-
-        const itemsWonAlice = await auction.getItemIdsWon(alice, {from:alice});
-        assert.equal(itemsWonAlice.length, 0);
 
         assert.equal(await nft.balanceOf(auction.address), 0);
         assert.equal(await nft.balanceOf(bob), 1);
@@ -224,15 +235,15 @@ contract('Auction', async (accounts) => {
 
     it('multiple bid success', async () => {
         const secondPrice = web3.utils.toWei(new BN('2'), 'ether');
-        await auction.bid(2, {from: alice, value: secondPrice});
+        const bidData1 = await auction.bid(2, {from: alice, value: secondPrice});
         assert.equal(await auction.bidCount(alice), 1);
+
+        expectEvent(bidData1, "Bid", { sender: alice, auctionId: new BN('2'), price: secondPrice });
         
-        await auction.bid(3, {from: alice, value: secondPrice});
+        const bidData2 = await auction.bid(3, {from: alice, value: secondPrice});
         assert.equal(await auction.bidCount(alice), 2);
 
-        const itemIds = await auction.getItemIdsBid(alice);
-        assert.equal(itemIds[0], 3);
-        assert.equal(itemIds[1], 4);
+        expectEvent(bidData2, "Bid", { sender: alice, auctionId: new BN('3'), price: secondPrice });
 
         const userBids = await auction.getUserBidding(alice);
         assert.equal(userBids.length, 3);
